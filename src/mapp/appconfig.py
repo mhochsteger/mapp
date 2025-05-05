@@ -1,7 +1,7 @@
 from webapp_client import AppAccessConfig, AppConfig
 from .app import Mapp
 
-_DESCRIPTION = """Map App to visualizes different maps and upload plans/images, based on Leaflet"""
+_DESCRIPTION = """Map App to visualizes different maps and upload/align plans/images, based on Openlayers"""
 
 config = AppConfig(
     name="Mapp",

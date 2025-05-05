@@ -1,5 +1,50 @@
-from webapp_client.basecomponent import Event
-from webapp_client.components import Div, Event
+from typing import Literal
+
+import pyodide.http
+from webapp_client.components import Div
+from webgpu import platform
+
+
+def get_kataster_layer(style: Literal["basic", "gis", "vermv", "ortho"] = "ortho"):
+    ol = platform.js.ol
+    kataster = ol.layer.VectorTile._new(
+        {
+            "declutter": True,
+            "source": ol.source.VectorTile._new(
+                {
+                    "url": "https://kataster.bev.gv.at/tiles/kataster/{z}/{x}/{y}.pbf",
+                    "format": ol.format.MVT._new(),
+                    "maxZoom": 16,
+                }
+            ),
+        }
+    )
+    platform.js.olms["applyStyle"](
+        kataster,
+        f"https://kataster.bev.gv.at/styles/kataster/style_{style}.json",
+    )
+    return kataster
+
+
+def get_symbole_layer(style: Literal["basic", "gis", "vermv", "ortho"] = "gis"):
+    ol = platform.js.ol
+    symbole = ol.layer.VectorTile._new(
+        {
+            "declutter": True,
+            "source": ol.source.VectorTile._new(
+                {
+                    "url": "https://kataster.bev.gv.at/tiles/symbole/{z}/{x}/{y}.pbf",
+                    "format": ol.format.MVT._new(),
+                    "maxZoom": 16,
+                }
+            ),
+        }
+    )
+    platform.js.olms["applyStyle"](
+        symbole,
+        f"https://kataster.bev.gv.at/styles/symbole/style_{style}.json",
+    )
+    return symbole
 
 
 class OpenLayersComponent(Div):
@@ -14,135 +59,71 @@ class OpenLayersComponent(Div):
         self.layers = {}
         self.wms = None
         self.protobuf = None
+        self.on_before_save(self._on_before_save)
+        self.on_load(self._on_load)
+        self.olmap = None
 
-        # self.on("map_loaded", self._on_map_loaded)
+    def _on_before_save(self):
+        view = self.olmap.getView()
+        center = view.getCenter()
+        zoom = view.getZoom()
+        self.storage.set("view", {"center": center, "zoom": zoom})
+
+    def _on_load(self):
+        view_data = self.storage.get("view")
+        if view_data:
+            view = self.olmap.getView()
+            view.setCenter(view_data["center"])
+            view.setZoom(view_data["zoom"])
 
     def _on_mounted(self):
-        from webgpu.platform import js
-        print("JS", js)
-
-        if js.ol is None:
-            print("ol is none, import package")
-            js.importPackage("https://cdn.jsdelivr.net/npm/ol@v10.5.0/dist/ol.js")
-            print("add style")
-            js.addStyleFile("https://cdn.jsdelivr.net/npm/ol@v10.5.0/ol.css")
-            print("import olms")
-            js.importPackage(
+        if platform.js.ol is None:
+            platform.js.importPackage(
+                "https://cdn.jsdelivr.net/npm/ol@v10.5.0/dist/ol.js"
+            )
+            platform.js.addStyleFile("https://cdn.jsdelivr.net/npm/ol@v10.5.0/ol.css")
+            platform.js.importPackage(
                 "https://cdn.jsdelivr.net/npm/ol-mapbox-style@v12.6.0/dist/olms.js"
             )
-            print("done")
 
-        ol = js.ol
-        ol["proj"]["useGeographic"]()
-        osm = ol["source"]["OSM"]._new()
+        ol = platform.js.ol
+        ol.proj.useGeographic()
 
-        view = ol["View"]._new(
-            {
-                "center": [15.1, 48.15],
-                "zoom": 17,
-            }
+        cap_url = "https://mapsneu.wien.gv.at/basemapneu/1.0.0/WMTSCapabilities.xml"
+
+        text = pyodide.http.open_url(cap_url).read()
+        parser = ol.format.WMTSCapabilities._new()
+        result = parser.read(text)
+
+        options = ol.source.WMTS.optionsFromCapabilities(
+            result,
+            {"layer": "bmaporthofoto30cm", "crossOrigin": "anonymous"},
         )
-        self.layers["osm"] = ol["layer"]["Tile"]._new(
-            {
-                "source": osm,
-            }
-        )
-        fill = ol["style"]["Fill"]._new(
-            {
-                "color": "rgba(255, 255, 255, 0.1)",
-            }
-        )
-        stroke = ol["style"]["Stroke"]._new(
-            {
-                "color": "#3309CC",
-                "width": 1.25,
-            }
+        options.tileGrid.maxZoom = 18
+
+        ortho = ol.layer.Tile._new(
+            {"opacity": 1, "source": ol.source.WMTS._new(options), "maxResolution": 18}
         )
 
-        ol_style = ol["style"]["Style"]._new(
-            {
-                "image": ol["style"]["Circle"]._new(
-                    {
-                        "fill": fill,
-                        "stroke": stroke,
-                        "radius": 5,
-                    }
-                ),
-                "fill": fill,
-                "stroke": stroke,
-                "text": ol["style"]["Text"]._new(
-                    {
-                        "fill": fill,
-                        "stroke": stroke,
-                    }
-                ),
-            }
-        )
+        view_data = self.storage.get("view")
+        if not view_data:
+            view_data = {"center": [15.1, 48.15], "zoom": 17}
+        view = ol.View._new(view_data)
 
-        # self.layers["mapbox"] = ol["layer"]["Vector"]._new(
-        #     {
-        #         "styleUrl": "https://kataster.bev.gv.at/styles/style_basic.json",
-        #     }
-        # )
-        kataster_src = ol["source"]["VectorTile"]._new(
-            {
-                "url": "https://kataster.bev.gv.at/tiles/kataster/{z}/{x}/{y}.pbf",
-                "format": ol["format"]["MVT"]._new(),
-                "maxZoom": 16,
-                "style": ol_style,
-            }
-        )
-        kataster = ol["layer"]["VectorTile"]._new(
-            {
-                "declutter": True,
-                "source": kataster_src,
-                "style": ol_style,
-                # "styleUrl": "https://kataster.bev.gv.at/styles/style_basic.json",
-            }
-        )
+        osm = ol.layer.Tile._new({"source": ol.source.OSM._new()})
 
-        symbole_src = ol["source"]["VectorTile"]._new(
-            {
-                "url": "https://kataster.bev.gv.at/tiles/symbole/{z}/{x}/{y}.pbf",
-                "format": ol["format"]["MVT"]._new(),
-                "maxZoom": 16,
-            }
-        )
+        kataster = get_kataster_layer()
+        symbole = get_symbole_layer()
 
-        # style_url = "https://kataster.bev.gv.at/styles/kataster/style_basic.json"
-        # style_url = style_url.replace("style_basic", "style_vermv")
-
-        kataster_style = "vermv"  # basic, gis, vermv, ortho
-        symbole_style = "gis"  # basic, gis, vermv, ortho
-
-        symbole = ol["layer"]["VectorTile"]._new(
-            {
-                "declutter": True,
-                "source": symbole_src,
-                "style": ol_style,
-            }
-        )
-        js.console['log']("symbole", symbole)
-        js.console['log']("kataster", kataster)
-        js.olms["applyStyle"](
-            symbole,
-            f"https://kataster.bev.gv.at/styles/symbole/style_{symbole_style}.json",
-        )
-        js.olms["applyStyle"](
-            kataster,
-            f"https://kataster.bev.gv.at/styles/kataster/style_{kataster_style}.json",
-        )
-        self.layers["kataster"] = kataster
-        self.layers["symbole"] = symbole
+        self.layers["Osm"] = osm
+        self.layers["Ortho"] = ortho
+        self.layers["Kataster"] = kataster
+        self.layers["Symbole"] = symbole
         self.olmap = ol["Map"]._new(
             {
-                "layers": [self.layers["osm"], kataster, symbole],
+                "layers": [osm, ortho, kataster, symbole],
                 "target": "map",
                 "view": view,
             }
         )
-        js.console['log']("olmap", self.olmap)
         self.sidebar.build_inputs(self.layers)
-
-
-
