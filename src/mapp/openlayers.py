@@ -1,6 +1,5 @@
 from typing import Literal
 
-import pyodide.http
 from webapp_client.components import Div
 from webgpu import platform
 
@@ -91,6 +90,7 @@ class OpenLayersComponent(Div):
 
         cap_url = "https://mapsneu.wien.gv.at/basemapneu/1.0.0/WMTSCapabilities.xml"
 
+        import pyodide.http
         text = pyodide.http.open_url(cap_url).read()
         parser = ol.format.WMTSCapabilities._new()
         result = parser.read(text)
