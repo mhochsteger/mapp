@@ -4,15 +4,17 @@ from .app import Mapp
 
 _DESCRIPTION = """Map App to visualizes different maps and upload/align images of plans, based on Openlayers"""
 
+
 def load_image(filename):
     picture = os.path.join(os.path.dirname(__file__), filename)
     return utils.load_image(picture)
+
 
 config = AppConfig(
     name="Mapp",
     version="0.0.1",
     python_class=Mapp,
-    frontend_pip_dependencies=['pillow'],
+    frontend_pip_dependencies=["pillow"],
     frontend_dependencies=[],
     description=_DESCRIPTION,
     compute_environments=[],

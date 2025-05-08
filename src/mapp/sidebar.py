@@ -31,7 +31,7 @@ class LayerOptions(Div):
             ui_max=1.0,
             ui_step=0.01,
             ui_dense=True,
-            ui_style={"max-width": "100px"},
+            ui_style={"max-width": "150px"},
             ui_class="q-pt-sm",
             id="opacity",
         )
