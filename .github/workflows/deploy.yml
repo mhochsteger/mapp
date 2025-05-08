@@ -23,8 +23,10 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install package
+      - name: Install webapp_client
         run: pip3 install https://ngsolve.org/files/webapp/webapp_client-0-py3-none-any.whl
+
+      - name: Build and install app
         run: pip3 install .
 
       - name: Generate HTML
