@@ -2,7 +2,7 @@ import os
 from webapp_client import AppAccessConfig, AppConfig, utils
 from .app import Mapp
 
-_DESCRIPTION = """Map App to visualizes different maps and upload/align images of plans, based on Openlayers"""
+_DESCRIPTION = """Map App to visualizes different maps and upload/align images of plans, based on CERBSim webapp and using openlayers."""
 
 
 def load_image(filename):
