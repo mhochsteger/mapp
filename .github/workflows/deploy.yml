@@ -1,0 +1,47 @@
+name: Build and Deploy App as Github pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install package
+        run: pip3 install https://ngsolve.org/files/webapp/webapp_client-0-py3-none-any.whl
+        run: pip3 install .
+
+      - name: Generate HTML
+        run: python3 -m webapp_client.cli.build_static_website -a mapp.appconfig
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: html
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url:
