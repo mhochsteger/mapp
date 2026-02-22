@@ -177,14 +177,14 @@ class OpenLayersComponent(Div):
         kataster = get_kataster_layer()
         symbole = get_symbole_layer()
 
+        self.layers["Arcanum"] = arcanum
         self.layers["Osm"] = osm
         self.layers["Ortho"] = ortho
         self.layers["Kataster"] = kataster
         self.layers["Symbole"] = symbole
-        self.layers["Arcanum"] = arcanum
         self.olmap = ol["Map"]._new(
             {
-                "layers": [osm, ortho, kataster, symbole, arcanum],
+                "layers": [arcanum, osm, ortho, kataster, symbole],
                 "target": "map",
                 "view": view,
             }
