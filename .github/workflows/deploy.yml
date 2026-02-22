@@ -23,6 +23,9 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install Dependencies
+        run: pip3 install websockets watchdog wheel setuptools pillow
+        
       - name: Install ngapp
         run: pip3 install git+https://github.com/cerbsim/ngapp.git
         
