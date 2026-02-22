@@ -61,7 +61,7 @@ class OpenLayersComponent(Div):
         self.on_before_save(self._on_before_save)
         self.on_load(self._on_load)
         self.olmap = None
-        
+
         self.ol = None
 
     def _on_before_save(self):

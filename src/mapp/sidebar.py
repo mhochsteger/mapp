@@ -6,7 +6,16 @@ import pickle
 from io import BytesIO
 
 import numpy as np
-from ngapp.components import Div, FileUpload, QBtn, QCheckbox, QSlider, QTooltip, Row, Col
+from ngapp.components import (
+    Div,
+    FileUpload,
+    QBtn,
+    QCheckbox,
+    QSlider,
+    QTooltip,
+    Row,
+    Col,
+)
 from PIL import Image
 from webgpu import platform
 
@@ -60,7 +69,9 @@ class ImageLayer(LayerOptions):
             ui_color="primary",
             ui_class="q-ml-md",
         ).on_click(self.set_alignment)
-        self.delete_btn = QBtn(ui_icon="mdi-delete", ui_color="negative", ui_class = "q-ml-md").on_click(self._delete)
+        self.delete_btn = QBtn(
+            ui_icon="mdi-delete", ui_color="negative", ui_class="q-ml-md"
+        ).on_click(self._delete)
         ol = openlayers.ol
         layer = ol.layer.Image._new(
             {
@@ -71,11 +82,18 @@ class ImageLayer(LayerOptions):
         super().__init__(openlayers, name, layer, **kwargs)
         self.opacity.ui_model_value = 0.8
         self.ui_children = [
-            Row(self.visible, self.name_div, self.opacity, self.align_btn, self.delete_btn, self.tooltip)
+            Row(
+                self.visible,
+                self.name_div,
+                self.opacity,
+                self.align_btn,
+                self.delete_btn,
+                self.tooltip,
+            )
         ]
 
         self.points = []
-        
+
     def _delete(self):
         self.openlayers.olmap.removeLayer(self.layer)
         p = self._parent
@@ -208,8 +226,17 @@ class SidebarComponent(Div):
         self.image_layers = []
         self._measurement_start = []
         super().__init__(
-            self.save_btn, self.load_btn, measure_distance, self.div_layers, self.map_upload, Row(self.pointer_status),
-            Row(self.measure_status), self.tooltip, **kwargs, ui_class="q-pa-none",ui_style="width: 24vw;"
+            self.save_btn,
+            self.load_btn,
+            measure_distance,
+            self.div_layers,
+            self.map_upload,
+            Row(self.pointer_status),
+            Row(self.measure_status),
+            self.tooltip,
+            **kwargs,
+            ui_class="q-pa-none",
+            ui_style="width: 24vw;",
         )
 
     def save_all(self):
@@ -251,20 +278,21 @@ class SidebarComponent(Div):
         if not os.path.exists("/data"):
             FS.mkdir("/data")
             FS.mount(FS.filesystems.IDBFS, {"autoPersist": True}, "/data")
-            
+
         global __mount_done
         __mount_done = False
-        
+
         def cb(*args):
             global __mount_done
             __mount_done = True
-        
+
         FS.syncfs(True, pyodide.ffi.create_once_callable(cb))
-        
+
         while not __mount_done:
             import time
+
             time.sleep(0.1)
-            
+
         do_load()
         self.ui_class = "q-pa-none"
         self.ui_style = "width: 24vw;"
@@ -282,11 +310,12 @@ class SidebarComponent(Div):
 
         self.div_layers.ui_children = children
         olmap = self.openlayers.olmap
-        
+
         def func(event):
             return self._on_move(event)
-            
+
         import pyodide.ffi
+
         func.ol_key = None
         olmap.once("pointermove", func)
 
@@ -318,7 +347,7 @@ class SidebarComponent(Div):
 
         olmap.addLayer(imlayer.layer)
         self.image_layers.append(imlayer)
-        
+
     def get_coord(self, event):
         ol = platform.js.ol
         lon_lat = event.coordinate
@@ -326,14 +355,14 @@ class SidebarComponent(Div):
         s_lon_lat = f"{lon_lat[0]:.6f}°, {lon_lat[1]:.6f}°"
         s_coord = f"{coord[0]:.3f}, {coord[1]:.3f}"
         return coord, [s_lon_lat, s_coord]
-        
+
     def _measure_distance(self, event):
         coord, s = self.get_coord(event)
-        
+
         self.pointer_status.ui_children = s
-        
+
         status = self.measure_status
-        
+
         if event.type == "click":
             is_first = len(self._measurement_start) == 0
             if is_first:
@@ -342,22 +371,29 @@ class SidebarComponent(Div):
                 self._one_click_callback(self._measure_distance)
                 status.ui_children = ["First point:", *s]
                 return
-        
+
             self._measurement_start = []
             self.tooltip.ui_hide()
         elif self._measurement_start:
             p0, s0 = self._measurement_start
-            
+
             import math
-            dist = math.sqrt((coord[0] - p0[0])**2 + (coord[1] - p0[1])**2)
-            status.ui_children = ["First point:", *s0,"Second point:", *s, "Distance:", f"{dist:.3f}m"]
-        
+
+            dist = math.sqrt((coord[0] - p0[0]) ** 2 + (coord[1] - p0[1]) ** 2)
+            status.ui_children = [
+                "First point:",
+                *s0,
+                "Second point:",
+                *s,
+                "Distance:",
+                f"{dist:.3f}m",
+            ]
 
     def _start_measure_distance(self):
         self.tooltip.ui_children = ["Click on first point to measure disance"]
         self.tooltip.ui_show()
         self._one_click_callback(self._measure_distance)
-        
+
     def _one_click_callback(self, f):
         olmap = self.openlayers.olmap
 
@@ -366,13 +402,13 @@ class SidebarComponent(Div):
 
         func.ol_key = None
         olmap.once("click", func)
-        
+
     def _on_move(self, event):
         self._measure_distance(event)
-        
+
         def func(event):
             return self._on_move(event)
-            
+
         func.ol_key = None
         olmap = self.openlayers.olmap
         olmap.once("pointermove", func)
