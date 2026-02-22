@@ -377,9 +377,9 @@ class SidebarComponent(Div):
         elif self._measurement_start:
             p0, s0 = self._measurement_start
 
-            import math
-
-            dist = math.sqrt((coord[0] - p0[0]) ** 2 + (coord[1] - p0[1]) ** 2)
+            ol = platform.js.ol
+            line = ol.geom.LineString._new([p0, coord])
+            dist = ol.sphere.getLength(line)
             status.ui_children = [
                 "First point:",
                 *s0,
