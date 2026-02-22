@@ -44,7 +44,7 @@ class LayerOptions(Div):
             id="opacity",
         )
         self.visible = QCheckbox(
-            ui_model_value=True, id="visible"
+            ui_model_value=self.layer.getVisible(), id="visible"
         ).on_update_model_value(self.set_visible)
         self.name_div = Div(name, id="name", ui_style="width: 6em", ui_class="q-pt-sm")
         self.opacity.on_update_model_value(self.set_opacity)
