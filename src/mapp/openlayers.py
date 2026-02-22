@@ -1,6 +1,6 @@
 from typing import Literal
 
-from webapp_client.components import Div
+from ngapp.components import Div
 from webgpu import platform
 
 
@@ -61,6 +61,8 @@ class OpenLayersComponent(Div):
         self.on_before_save(self._on_before_save)
         self.on_load(self._on_load)
         self.olmap = None
+        
+        self.ol = None
 
     def _on_before_save(self):
         view = self.olmap.getView()
@@ -85,7 +87,7 @@ class OpenLayersComponent(Div):
                 "https://cdn.jsdelivr.net/npm/ol-mapbox-style@v12.6.0/dist/olms.js"
             )
 
-        ol = platform.js.ol
+        ol = self.ol = platform.js.ol
         ol.proj.useGeographic()
 
         cap_url = "https://mapsneu.wien.gv.at/basemapneu/1.0.0/WMTSCapabilities.xml"

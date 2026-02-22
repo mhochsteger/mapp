@@ -1,5 +1,5 @@
-from webapp_client.app import App
-from webapp_client.components import Row
+from ngapp.app import App
+from ngapp.components import Row
 
 from .openlayers import OpenLayersComponent
 from .sidebar import SidebarComponent

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mapp"
-version = "0.0.1"
-dependencies = []
+dynamic = ["version"]
+dependencies = ["ngapp"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

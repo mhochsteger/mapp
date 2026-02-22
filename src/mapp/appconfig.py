@@ -1,14 +1,7 @@
-import os
-from webapp_client import AppAccessConfig, AppConfig, utils
+from ngapp import AppAccessConfig, AppConfig, asset
 from .app import Mapp
 
 _DESCRIPTION = """Map App to visualizes different maps and upload/align images of plans, based on CERBSim webapp and using openlayers."""
-
-
-def load_image(filename):
-    picture = os.path.join(os.path.dirname(__file__), filename)
-    return utils.load_image(picture)
-
 
 config = AppConfig(
     name="Mapp",
@@ -19,5 +12,5 @@ config = AppConfig(
     description=_DESCRIPTION,
     compute_environments=[],
     access=AppAccessConfig(),
-    image=load_image("logo.webp"),
+    image=asset("logo.webp"),
 )

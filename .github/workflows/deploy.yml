@@ -23,14 +23,14 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install webapp_client
-        run: pip3 install https://ngsolve.org/files/webapp/webapp_client-0-py3-none-any.whl
-
+      - name: Install ngapp
+        run: pip3 install git+https://github.com/cerbsim/ngapp.git
+        
       - name: Build and install app
         run: pip3 install .
 
       - name: Generate HTML
-        run: python3 -m webapp_client.cli.build_static_website -a mapp.appconfig
+        run: python3 -m ngapp.cli.build_website -a mapp.appconfig
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
