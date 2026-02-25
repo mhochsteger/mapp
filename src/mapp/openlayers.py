@@ -109,64 +109,21 @@ class OpenLayersComponent(Div):
             {"opacity": 1, "source": ol.source.WMTS._new(options), "maxResolution": 18}
         )
 
-        # example url https://tiles.arcanum.com/mercator/cadastral/16/35738/22729?v=54
-        #  -H 'Referer: https://maps.arcanum.com/'   \
-        import json
-
-        options = {
-            "method": "GET",
-            "headers": {
-                # "Origin": "https://maps.arcanum.com",
-                "x-corsfix-headers": json.dumps(
-                    {
-                        # "Origin": "https://maps.arcanum.com",
-                        "Referer": "https://maps.arcanum.com",
-                    }
-                ),
-            },
-        }
-
-        async def load_tile(imageTile, src):
-            storage = platform.js.localStorage
-            key = "get_url_" + src
-            data = storage["get_url_" + src]
-            if data is None:
-                from pyodide.http import pyfetch
-
-                url = "https://proxy.corsfix.com/?url=" + src
-                headers = options["headers"]
-                try:
-                    response = await pyfetch(url, headers=headers)
-                    if response.ok:
-                        data_type = response.headers.get("content-type").replace(
-                            "image/", ""
-                        )
-                        data = f"data:{data_type};base64,{base64.b64encode(await response.bytes()).decode()}"
-                        storage[key] = data
-                except Exception as e:
-                    print(f"Error loading tile: {e}")
-            if data is not None:
-                imageTile.getImage().src = data
-
-        arcanum_src = ol.source.XYZ._new(
-            {
-                "url": "https://tiles.arcanum.com/mercator/cadastral/{z}/{x}/{y}",
-                "tileLoadFunction": load_tile,
-                "maxZoom": 18,
-            }
-        )
-
         arcanum = ol.layer.Tile._new(
             {
-                "source": arcanum_src,
+                "source": ol.source.XYZ._new(
+                    {
+                        "url": "https://proxy.hochsteger.net/mercator/cadastral/{z}/{x}/{y}",
+                        "maxZoom": 18,
+                        "crossOrigin": "anonymous",
+                    }
+                ),
                 "opacity": 1,
             }
         )
 
         arcanum.setVisible(False)
 
-        platform.js.console.log("src", arcanum_src)
-        platform.js.console.log("arc", arcanum)
         view_data = self.storage.get("view")
         if not view_data:
             view_data = {"center": [15.1, 48.15], "zoom": 17}
